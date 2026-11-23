@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A small local coding agent for Python projects.">
+    <title>Coding Bot</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: system-ui, sans-serif;
+        color: #172033;
+        background: #f5f7fb;
+      }
+
+      body {
+        box-sizing: border-box;
+        display: grid;
+        min-height: 100vh;
+        margin: 0;
+        padding: 2rem;
+        place-items: center;
+      }
+
+      main {
+        width: min(100%, 42rem);
+        padding: clamp(1.5rem, 6vw, 3rem);
+        border: 1px solid #dfe5ef;
+        border-radius: 1rem;
+        background: #fff;
+        box-shadow: 0 1rem 3rem #17203312;
+      }
+
+      h1 {
+        margin-top: 0;
+        font-size: clamp(2.5rem, 8vw, 4rem);
+        letter-spacing: -0.05em;
+      }
+
+      p, li {
+        color: #46536b;
+        line-height: 1.7;
+      }
+
+      code {
+        padding: 0.15em 0.35em;
+        border-radius: 0.25em;
+        background: #f0f3f8;
+      }
+
+      a {
+        color: #174ea6;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p>A small local coding agent</p>
+      <h1>Coding Bot</h1>
+      <p>
+        Coding Bot helps with coding tasks in a Python project through an
+        OpenAI-compatible Chat Completions API.
+      </p>
+      <ul>
+        <li>Run coding tasks from the command line.</li>
+        <li>Use an optional local web interface.</li>
+        <li>Keep file access and allowed shell commands within your project root.</li>
+      </ul>
+      <p>
+        Requires Python 3.10+ and an API key in <code>OPENAI_API_KEY</code>.
+        The web interface binds to localhost; this Pages site is documentation
+        only and does not run the bot.
+      </p>
+      <p><a href="https://github.com/CELESTINO-UX/coding-bot">View the project on GitHub</a></p>
+    </main>
+  </body>
+</html>
