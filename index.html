@@ -3,71 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AutoCode Bot · command runner</title>
+  <title>VS Code Bot · Natural command runner</title>
   <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; min-height: 100vh; padding: 20px; display: grid; place-items: center;
-      background: #1e1e1e; color: #d4d4d4;
-      font-family: 'Segoe UI', sans-serif;
-    }
-    .app {
-      width: min(900px, 100%); overflow: hidden; border: 1px solid #3e3e42;
-      border-radius: 12px; background: #252526;
-      box-shadow: 0 20px 40px #0009;
-    }
-    header { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #2d2d2d; border-bottom: 1px solid #3c3c3c; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { min-height: 100vh; display: grid; place-items: center; padding: 16px; background: #1e1e1e; font-family: 'Segoe UI', sans-serif; }
+    .app { width: min(920px, 100%); overflow: hidden; border: 1px solid #3e3e42; border-radius: 12px; background: #252526; color: #d4d4d4; box-shadow: 0 20px 40px #0009; }
+    header { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 10px 16px; background: #2d2d2d; border-bottom: 1px solid #3c3c3c; }
     .dots { display: flex; gap: 7px; }
     .dot { width: 12px; height: 12px; border-radius: 50%; }
-    .red { background: #fe5f57; } .yellow { background: #febc2e; } .green { background: #28c840; }
-    header strong { font-size: 14px; font-weight: 500; }
-    .badge { margin-left: auto; padding: 3px 9px; border-radius: 20px; background: #3a3a3a; color: #9cdcfe; font-size: 11px; }
+    .dot.red { background: #fe5f57; } .dot.yellow { background: #febc2e; } .dot.green { background: #28c840; }
+    header strong { font-size: 14px; font-weight: 500; } .badge { margin-left: auto; border-radius: 20px; padding: 3px 9px; background: #3a3a3a; color: #9cdcfe; font-size: 11px; }
     main { padding: 24px; }
-    h1 { margin: 0 0 8px; font-size: 20px; font-weight: 500; }
-    .intro, .help { color: #aaa; font-size: 14px; line-height: 1.6; }
-    .intro { margin: 0 0 20px; }
-    label { display: block; margin-bottom: 8px; color: #ccc; font-size: 13px; font-weight: 600; }
-    .input-row { display: flex; gap: 10px; }
-    #commandInput {
-      flex: 1; min-width: 0; padding: 12px 14px; border: 1px solid #3c3c3c; border-radius: 6px;
-      outline: none; background: #1e1e1e; color: #f1f1f1; font: 15px 'Consolas', monospace;
-    }
+    h1 { margin-bottom: 8px; font-size: 20px; font-weight: 500; }
+    .intro { margin-bottom: 18px; color: #aaa; line-height: 1.5; }
+    label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; }
+    .command-row { display: flex; gap: 10px; }
+    #commandInput { flex: 1; min-width: 0; padding: 12px 14px; border: 1px solid #3c3c3c; border-radius: 6px; outline: none; background: #1e1e1e; color: #f1f1f1; font: 15px 'Consolas', monospace; }
     #commandInput:focus { border-color: #007acc; box-shadow: 0 0 0 2px #007acc33; }
-    button { border: 0; border-radius: 6px; background: #0e639c; color: white; padding: 0 20px; font-size: 14px; cursor: pointer; }
-    button:hover { background: #1177bb; } button:disabled { opacity: .65; cursor: wait; }
-    .help { margin: 12px 0 22px; }
-    .help code { color: #9cdcfe; }
-    .status { min-height: 20px; margin-bottom: 8px; color: #9cdcfe; font-size: 13px; }
-    .console-wrap { border-top: 1px solid #3c3c3c; padding-top: 18px; }
-    .console-title { margin-bottom: 10px; color: #ccc; font-size: 12px; font-weight: 600; letter-spacing: .7px; }
+    #runButton { border: 0; border-radius: 6px; padding: 0 20px; background: #0e639c; color: #fff; font-size: 14px; cursor: pointer; }
+    #runButton:hover { background: #1177bb; } #runButton:disabled { opacity: .65; cursor: wait; }
+    .examples { margin: 12px 0 18px; color: #888; font-size: 12px; line-height: 1.7; }
+    .examples code { color: #9cdcfe; }
+    #status { min-height: 20px; margin-bottom: 8px; color: #9cdcfe; font-size: 13px; }
+    .output-title { margin: 16px 0 10px; font-size: 12px; font-weight: 600; letter-spacing: .7px; }
     #output { min-height: 150px; max-height: 300px; overflow-y: auto; padding: 14px 16px; border: 1px solid #2d2d2d; border-radius: 8px; background: #0c0c0c; font: 13px/1.7 'Consolas', monospace; }
     .line { display: flex; gap: 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
-    .prompt { color: #569cd6; } .command { color: #6a9955; } .result { color: #b5cea8; } .error { color: #f48771; }
-    @media (max-width: 560px) { main { padding: 18px; } .input-row { flex-direction: column; } button { min-height: 42px; } }
+    .prompt { color: #569cd6; } .command { color: #6a9955; } .result { color: #b5cea8; } .error { color: #f48771; } .comment { color: #6a9955; }
+    @media (max-width: 560px) { main { padding: 18px; } .command-row { flex-direction: column; } #runButton { min-height: 44px; } }
   </style>
 </head>
 <body>
   <div class="app">
     <header>
       <div class="dots" aria-hidden="true"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
-      <strong>⚡ AutoCode Bot</strong><span class="badge">COMMAND MODE</span>
+      <strong>⚡ AutoCode Bot</strong><span class="badge">NATURAL COMMANDS</span>
     </header>
     <main>
-      <h1>Give the bot a command</h1>
-      <p class="intro">Write what you want the bot to do, then press <b>Run command</b> or Enter.</p>
+      <h1>What should the bot do?</h1>
+      <p class="intro">Type an instruction naturally. You can use words or the original coding commands.</p>
       <label for="commandInput">Your command</label>
-      <div class="input-row">
-        <input id="commandInput" type="text" placeholder="Try: add 12 and 8, say hello, or what time is it" autocomplete="off" spellcheck="false">
-        <button id="runButton" type="button">▶ Run command</button>
+      <div class="command-row">
+        <input id="commandInput" type="text" placeholder="Example: please add 12 and 8" autocomplete="off" spellcheck="false">
+        <button id="runButton" type="button">▶ Run</button>
       </div>
-      <p class="help">Try <code>help</code>, <code>say hello</code>, <code>add 12 and 8</code>, <code>what time is it</code>, or <code>2 + 2</code>.</p>
-      <div class="status" id="status" role="status" aria-live="polite">🤖 Ready for a command.</div>
-      <section class="console-wrap" aria-label="Command output">
-        <div class="console-title">📋 OUTPUT</div>
-        <div id="output" role="log" aria-live="polite">
-          <div class="line"><span class="prompt">➜</span><span class="result">Welcome! Type <b>help</b> to see available commands.</span></div>
-        </div>
-      </section>
+      <div class="examples">Examples: <code>help</code>, <code>say hello</code>, <code>please add 12 and 8</code>, <code>subtract 5 from 12</code>, <code>multiply 6 by 7</code>, <code>what time is it</code>, <code>clear</code></div>
+      <div id="status" role="status" aria-live="polite">🤖 Ready for a command.</div>
+      <div class="output-title">📋 OUTPUT</div>
+      <div id="output" role="log" aria-live="polite">
+        <div class="line"><span class="prompt">➜</span><span class="comment">Type help to see all available commands.</span></div>
+      </div>
     </main>
   </div>
   <script>
@@ -76,6 +60,19 @@
       const button = document.getElementById('runButton');
       const output = document.getElementById('output');
       const status = document.getElementById('status');
+
+      const numberPattern = '(-?(?:\\d+(?:\\.\\d+)?|\\.\\d+))';
+
+      function cleanInstruction(text) {
+        return text.trim()
+          .replace(/[.!?]+$/, '')
+          .replace(/^please\s+/i, '')
+          .replace(/^can you\s+/i, '')
+          .replace(/^could you\s+/i, '')
+          .replace(/^would you\s+/i, '')
+          .replace(/^bot\s*/i, '')
+          .trim();
+      }
 
       function printLine(text, kind = 'result') {
         const line = document.createElement('div');
@@ -91,46 +88,112 @@
         output.scrollTop = output.scrollHeight;
       }
 
+      function formatNumber(value) {
+        return Object.is(value, -0) ? '0' : String(Number(value.toFixed(10)));
+      }
+
       function runCommand() {
-        const command = input.value.trim();
-        if (!command) {
-          status.textContent = 'Type a command first.';
-          input.focus();
-          return;
-        }
-        printLine('> ' + command, 'command');
+        const original = input.value.trim();
+        if (!original) { status.textContent = 'Type a command first.'; input.focus(); return; }
+
+        const command = cleanInstruction(original);
+        const normalized = command.toLowerCase().replace(/\s+/g, ' ').trim();
+        printLine('> ' + original, 'command');
         button.disabled = true;
-        status.textContent = '🤖 Working...';
+        status.textContent = '🤖 Understanding command...';
 
-        window.setTimeout(() => {
+        setTimeout(() => {
+          let response = '';
           try {
-            const normalized = command.toLowerCase();
-            let response;
-
-            if (/^(help|\?)$/.test(normalized)) {
-              response = 'Commands: say <text>, add <number> and <number>, what time is it, clear, or a simple calculation like 2 + 2.';
-            } else if (normalized === 'clear' || normalized === 'clear output') {
+            // General help and page/output commands
+            if (/^(help|commands|what can you do|show help|\?)$/.test(normalized)) {
+              response = 'Available commands: help · say/echo/print <text> · add <a> and <b> · subtract <b> from <a> · multiply <a> by <b> · divide <a> by <b> · what time is it · clear · open <url> · simple calculations such as 2 + 2';
+            } else if (/^(clear|clear output|clear the output|reset output)$/i.test(normalized)) {
               output.replaceChildren();
               response = 'Output cleared.';
-            } else if (/^(say|print|echo)\s+.+/i.test(command)) {
-              response = command.replace(/^(say|print|echo)\s+/i, '');
-            } else if (/^(what time is it|time|current time)$/i.test(command)) {
+            } else if (/^(hi|hello|hey|greetings)[!.]*$/.test(normalized)) {
+              response = 'Hello! I am ready for a command.';
+            } else if (/^(who are you|what are you|introduce yourself)$/.test(normalized)) {
+              response = 'I am a browser-based command bot that understands written instructions locally.';
+            } else if (/^(thank you|thanks)( very much)?[!.]*$/.test(normalized)) {
+              response = 'You’re welcome!';
+            } else if (/^(how are you|how are you doing)[?.!]*$/.test(normalized)) {
+              response = 'I’m ready and working correctly.';
+            } else if (/^(open|go to|visit)\s+.+/i.test(normalized)) {
+              let target = normalized.replace(/^(open|go to|visit)\s+/i, '').trim();
+              if (!/^https?:\/\//i.test(target)) target = 'https://' + target;
+              try {
+                const url = new URL(target);
+                if (!['http:', 'https:'].includes(url.protocol)) throw new Error();
+                window.open(url.href, '_blank', 'noopener,noreferrer');
+                response = 'Opened ' + url.href;
+              } catch (_) {
+                throw new Error('Please provide a valid website address, for example open github.com.');
+              }
+            } else if (/^(what time is it|what is the time|tell me the time|current time|time)$/i.test(normalized)) {
               response = new Date().toLocaleString();
+            } else if (/^(what('|’)?s today|what is today|today('|’)?s date|what is the date|current date)$/i.test(normalized)) {
+              response = new Date().toLocaleDateString();
+            } else if (/^(say|speak|print|echo|repeat|tell me)\s+.+/i.test(command)) {
+              response = command.replace(/^(say|speak|print|echo|repeat|tell me)\s+/i, '').replace(/^(that\s+)/i, '');
             } else {
-              const addCommand = normalized.match(/^add\s+(-?\d+(?:\.\d+)?)\s+(?:and|to|\+)\s+(-?\d+(?:\.\d+)?)$/);
-              const calculation = command.match(/^\s*(-?\d+(?:\.\d+)?)\s*([+*/-])\s*(-?\d+(?:\.\d+)?)\s*$/);
-              const match = addCommand || calculation;
+              let left;
+              let right;
+              let operator;
+
+              // Natural-language arithmetic
+              let match = normalized.match(new RegExp('^add\\s+' + numberPattern + '\\s+(?:and|plus|to)\\s+' + numberPattern + '$'));
+              if (match) { left = Number(match[1]); right = Number(match[2]); operator = '+'; }
+              if (!match) {
+                match = normalized.match(new RegExp('^subtract\\s+' + numberPattern + '\\s+(?:from)\\s+' + numberPattern + '$'));
+                if (match) { left = Number(match[2]); right = Number(match[1]); operator = '-'; }
+              }
+              if (!match) {
+                match = normalized.match(new RegExp('^multiply\\s+' + numberPattern + '\\s+(?:by|and|times)\\s+' + numberPattern + '$'));
+                if (match) { left = Number(match[1]); right = Number(match[2]); operator = '*'; }
+              }
+              if (!match) {
+                match = normalized.match(new RegExp('^divide\\s+' + numberPattern + '\\s+(?:by)\\s+' + numberPattern + '$'));
+                if (match) { left = Number(match[1]); right = Number(match[2]); operator = '/'; }
+              }
+
+              // Natural alternatives: 12 plus 8, 12 minus 5, 6 times 7
+              if (!match) {
+                match = normalized.match(new RegExp('^' + numberPattern + '\\s+(plus|add|and)\\s+' + numberPattern + '$'));
+                if (match) { left = Number(match[1]); right = Number(match[3]); operator = '+'; }
+              }
+              if (!match) {
+                match = normalized.match(new RegExp('^' + numberPattern + '\\s+(minus|subtract)\\s+' + numberPattern + '$'));
+                if (match) { left = Number(match[1]); right = Number(match[3]); operator = '-'; }
+              }
+              if (!match) {
+                match = normalized.match(new RegExp('^' + numberPattern + '\\s+(times|multiplied by|multiply)\\s+' + numberPattern + '$'));
+                if (match) { left = Number(match[1]); right = Number(match[3]); operator = '*'; }
+              }
+              if (!match) {
+                match = normalized.match(new RegExp('^' + numberPattern + '\\s+(divided by|divide)\\s+' + numberPattern + '$'));
+                if (match) { left = Number(match[1]); right = Number(match[3]); operator = '/'; }
+              }
+
+              // Direct expression, e.g. 2 + 2, 10/2
+              if (!match) {
+                match = normalized.match(new RegExp('^\\s*' + numberPattern + '\\s*([+*/-])\\s*' + numberPattern + '\\s*$'));
+                if (match) { left = Number(match[1]); operator = match[3]; right = Number(match[4]); }
+              }
+
               if (match) {
-                const left = Number(match[1]);
-                const right = Number(match[2]);
-                const operator = addCommand ? '+' : calculation[2];
                 if (operator === '/' && right === 0) throw new Error('Cannot divide by zero.');
-                const value = operator === '+' ? left + right : operator === '-' ? left - right : operator === '*' ? left * right : left / right;
-                response = String(value);
+                let value;
+                if (operator === '+') value = left + right;
+                if (operator === '-') value = left - right;
+                if (operator === '*') value = left * right;
+                if (operator === '/') value = left / right;
+                response = formatNumber(value);
               } else {
-                throw new Error('I do not know that command yet. Type "help" to see what I can do.');
+                throw new Error('I do not recognize that command yet. Type "help" to see what I can do.');
               }
             }
+
             printLine(response);
             status.textContent = '🤖 Command completed.';
           } catch (error) {
@@ -144,9 +207,7 @@
       }
 
       button.addEventListener('click', runCommand);
-      input.addEventListener('keydown', event => {
-        if (event.key === 'Enter') runCommand();
-      });
+      input.addEventListener('keydown', event => { if (event.key === 'Enter') runCommand(); });
       input.focus();
     })();
   </script>
