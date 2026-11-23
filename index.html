@@ -1,77 +1,544 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="A small local coding agent for Python projects.">
-    <title>Coding Bot</title>
-    <style>
-      :root {
-        color-scheme: light;
-        font-family: system-ui, sans-serif;
-        color: #172033;
-        background: #f5f7fb;
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VS Code Bot · one‑line auto‑coder</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', 'Consolas', 'Monaco', 'Fira Code', monospace;
+    }
+    body {
+      background: #1e1e1e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+    .ide-frame {
+      background: #252526;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.7), 0 0 0 1px #3c3c3c;
+      width: 900px;
+      max-width: 100%;
+      overflow: hidden;
+      border: 1px solid #3e3e42;
+    }
+    /* title bar – visual studio style */
+    .title-bar {
+      background: #2d2d2d;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid #3c3c3c;
+    }
+    .title-bar .dots {
+      display: flex;
+      gap: 8px;
+    }
+    .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+    }
+    .dot.red { background: #fe5f57; }
+    .dot.yellow { background: #febc2e; }
+    .dot.green { background: #28c840; }
+    .title-text {
+      color: #cccccc;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .title-text span {
+      background: #3a3a3a;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      color: #9cdcfe;
+    }
+    /* main editor area */
+    .editor-area {
+      background: #1e1e1e;
+      padding: 20px 0 0 0;
+    }
+    .tab-bar {
+      display: flex;
+      background: #2d2d2d;
+      border-bottom: 1px solid #3c3c3c;
+      padding-left: 8px;
+    }
+    .tab {
+      background: #1e1e1e;
+      color: #e0e0e0;
+      padding: 8px 18px;
+      font-size: 13px;
+      border-top: 2px solid #007acc;
+      border-right: 1px solid #3c3c3c;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tab .filename {
+      font-weight: 400;
+    }
+    .tab .bot-badge {
+      background: #0e639c;
+      color: white;
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      letter-spacing: 0.5px;
+    }
+    /* code + output split */
+    .code-panel {
+      display: flex;
+      flex-direction: column;
+    }
+    .line-editor {
+      display: flex;
+      background: #1e1e1e;
+      border-bottom: 1px solid #2a2a2a;
+      padding: 20px 24px;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .line-number {
+      color: #858585;
+      font-size: 16px;
+      font-family: 'Consolas', monospace;
+      line-height: 1.6;
+      user-select: none;
+      min-width: 32px;
+    }
+    .code-input-wrapper {
+      flex: 1;
+      position: relative;
+    }
+    #oneLineCode {
+      width: 100%;
+      background: #1e1e1e;
+      border: none;
+      color: #d4d4d4;
+      font-family: 'Consolas', 'Fira Code', monospace;
+      font-size: 16px;
+      line-height: 1.6;
+      padding: 6px 12px;
+      border-radius: 6px;
+      outline: 1px solid #3c3c3c;
+      transition: outline 0.2s, box-shadow 0.2s;
+      resize: none;
+      overflow: hidden;
+      white-space: nowrap;
+      letter-spacing: 0.2px;
+      caret-color: #569cd6;
+    }
+    #oneLineCode:focus {
+      outline: 1px solid #007acc;
+      box-shadow: 0 0 0 2px rgba(0,122,204,0.2);
+    }
+    .bot-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 10px;
+      align-items: center;
+    }
+    .run-btn {
+      background: #0e639c;
+      color: white;
+      border: none;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 8px 24px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .run-btn:hover {
+      background: #1177bb;
+    }
+    .run-btn:active {
+      transform: scale(0.97);
+    }
+    .run-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    .bot-status {
+      color: #9cdcfe;
+      font-size: 13px;
+      background: #2a2d2e;
+      padding: 6px 16px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-left: 3px solid #007acc;
+    }
+    .bot-status .spinner {
+      width: 12px;
+      height: 12px;
+      border: 2px solid #569cd6;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* output panel */
+    .output-panel {
+      background: #1e1e1e;
+      border-top: 1px solid #3c3c3c;
+      padding: 16px 24px 20px 24px;
+    }
+    .output-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 12px;
+      color: #cccccc;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      font-weight: 600;
+    }
+    .output-header .badge {
+      background: #2d2d2d;
+      padding: 2px 12px;
+      border-radius: 12px;
+      font-size: 10px;
+      color: #b0b0b0;
+      text-transform: none;
+      letter-spacing: 0.3px;
+      font-weight: 400;
+    }
+    .console {
+      background: #0c0c0c;
+      border-radius: 8px;
+      padding: 16px 20px;
+      min-height: 130px;
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid #2d2d2d;
+      font-family: 'Consolas', 'Fira Code', monospace;
+      font-size: 13.5px;
+      color: #d4d4d4;
+      line-height: 1.6;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.6);
+    }
+    .console-line {
+      display: flex;
+      gap: 10px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .console-line .prompt {
+      color: #569cd6;
+      user-select: none;
+      font-weight: 600;
+    }
+    .console-line .result {
+      color: #b5cea8;
+    }
+    .console-line .error {
+      color: #f48771;
+    }
+    .console-line .comment {
+      color: #6a9955;
+    }
+    .console-line .time {
+      color: #666;
+      font-size: 11px;
+      margin-left: 8px;
+    }
+    /* scrollbar */
+    .console::-webkit-scrollbar {
+      width: 10px;
+    }
+    .console::-webkit-scrollbar-track {
+      background: #1e1e1e;
+    }
+    .console::-webkit-scrollbar-thumb {
+      background: #3e3e42;
+      border-radius: 5px;
+    }
+    .console::-webkit-scrollbar-thumb:hover {
+      background: #4e4e52;
+    }
+  </style>
+</head>
+<body>
+  <div class="ide-frame">
+    <!-- title bar -->
+    <div class="title-bar">
+      <div class="dots">
+        <div class="dot red"></div>
+        <div class="dot yellow"></div>
+        <div class="dot green"></div>
+      </div>
+      <div class="title-text">
+        ⚡ AutoCode Bot &nbsp;—&nbsp; one‑line programming <span>VS Code style</span>
+      </div>
+    </div>
+
+    <!-- editor tab -->
+    <div class="tab-bar">
+      <div class="tab">
+        <span class="filename">bot.js</span>
+        <span class="bot-badge">AUTO</span>
+      </div>
+    </div>
+
+    <!-- main editor: one line only -->
+    <div class="editor-area">
+      <div class="code-panel">
+        <div class="line-editor">
+          <div class="line-number">1</div>
+          <div class="code-input-wrapper">
+            <input type="text" id="oneLineCode" value="console.log('Hello, bot world!')" spellcheck="false" autocomplete="off" />
+          </div>
+        </div>
+        <!-- action row -->
+        <div style="padding: 12px 24px 16px 24px; display: flex; justify-content: space-between; align-items: center;">
+          <div class="bot-actions">
+            <button class="run-btn" id="runBotBtn">
+              <svg viewBox="0 0 16 16"><path d="M4 2.5v11l9-5.5-9-5.5z"/></svg>
+              Run one‑line
+            </button>
+            <div class="bot-status" id="botStatus">
+              <span class="spinner" id="statusSpinner"></span>
+              <span id="statusText">🤖 ready to code</span>
+            </div>
+          </div>
+          <div style="font-size: 12px; color: #666; font-family: 'Consolas', monospace;">
+            auto‑bot v1.0
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- output panel -->
+    <div class="output-panel">
+      <div class="output-header">
+        <span>📋 OUTPUT / CONSOLE</span>
+        <span class="badge">automated</span>
+      </div>
+      <div class="console" id="consoleOutput">
+        <!-- prefilled welcome -->
+        <div class="console-line">
+          <span class="prompt">➜</span>
+          <span class="comment">// Automated coding bot ready. Type one line of JS and press Run.</span>
+        </div>
+        <div class="console-line">
+          <span class="prompt">➜</span>
+          <span class="comment">// Example: 2+2  |  'Hello'.toUpperCase()  |  [1,2,3].map(x=>x*2)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // DOM references
+      const runBtn = document.getElementById('runBotBtn');
+      const codeInput = document.getElementById('oneLineCode');
+      const consoleDiv = document.getElementById('consoleOutput');
+      const statusText = document.getElementById('statusText');
+      const spinner = document.getElementById('statusSpinner');
+
+      // helper: append a line to console with optional class
+      function appendConsoleLine(content, type = 'result', addTimestamp = true) {
+        const line = document.createElement('div');
+        line.className = 'console-line';
+
+        // prompt symbol
+        const promptSpan = document.createElement('span');
+        promptSpan.className = 'prompt';
+        promptSpan.textContent = '➜';
+        line.appendChild(promptSpan);
+
+        // content span
+        const contentSpan = document.createElement('span');
+        contentSpan.className = type;
+        contentSpan.textContent = content;
+        line.appendChild(contentSpan);
+
+        // timestamp (optional)
+        if (addTimestamp) {
+          const timeSpan = document.createElement('span');
+          timeSpan.className = 'time';
+          const now = new Date();
+          timeSpan.textContent = `[${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}]`;
+          line.appendChild(timeSpan);
+        }
+
+        consoleDiv.appendChild(line);
+        // auto scroll to bottom
+        consoleDiv.scrollTop = consoleDiv.scrollHeight;
       }
 
-      body {
-        box-sizing: border-box;
-        display: grid;
-        min-height: 100vh;
-        margin: 0;
-        padding: 2rem;
-        place-items: center;
+      // set loading state
+      function setLoading(isLoading) {
+        if (isLoading) {
+          spinner.style.display = 'inline-block';
+          statusText.textContent = '🤖 bot processing...';
+          runBtn.disabled = true;
+          runBtn.style.opacity = '0.7';
+        } else {
+          spinner.style.display = 'none';
+          statusText.textContent = '🤖 ready to code';
+          runBtn.disabled = false;
+          runBtn.style.opacity = '1';
+        }
       }
 
-      main {
-        width: min(100%, 42rem);
-        padding: clamp(1.5rem, 6vw, 3rem);
-        border: 1px solid #dfe5ef;
-        border-radius: 1rem;
-        background: #fff;
-        box-shadow: 0 1rem 3rem #17203312;
+      // main execution: safely evaluate one line of code
+      function executeOneLine(code) {
+        // Trim and check if empty
+        const trimmed = code.trim();
+        if (trimmed === '') {
+          appendConsoleLine('// no code provided', 'comment');
+          return;
+        }
+
+        // Add the input command echo as comment (visual studio style)
+        appendConsoleLine(`// > ${trimmed}`, 'comment', false);
+
+        // We use Function constructor to avoid scope issues and allow statements.
+        // But we also want to return the result if it's an expression.
+        // A common trick: try to eval as expression, else execute as statement.
+        let output;
+        let error = null;
+
+        try {
+          // First attempt: evaluate as expression (returns value)
+          // Using Function to create a sandbox-ish (still global but fine for demo)
+          // We use indirect eval to capture value.
+          // However, indirect eval runs in global scope, but we want to return value.
+          // Better: use Function constructor with 'return' prefix.
+          // But if the code contains semicolons or statements, it fails.
+          // We'll try expression first, then statement fallback.
+
+          // Try expression (with return)
+          try {
+            // Expression evaluation with Function (safer than eval in this context)
+            const exprFunc = new Function(`return (${trimmed})`);
+            output = exprFunc();
+            if (output === undefined) {
+              // It was an expression but returned undefined, maybe statement?
+              // fallback
+              throw new Error('undefined expression');
+            }
+            // Successfully evaluated expression
+            appendConsoleLine(`✔ ${String(output)}`, 'result');
+            return; // done
+          } catch (exprError) {
+            // Not a simple expression — try as statement
+            // Use Function body to execute statements, but we need to capture console.log
+            // We'll override console.log temporarily inside the execution context
+            // but easier: run the statement and capture return if any? 
+            // Since it's one line, we can also try to catch console.log output.
+            // Let's intercept console.log inside the function scope.
+            const originalLog = console.log;
+            const capturedLogs = [];
+            // Override console.log for the duration of the call
+            console.log = (...args) => {
+              capturedLogs.push(args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
+              ).join(' '));
+              // Still call original to keep devtools? Not needed.
+            };
+
+            try {
+              // Execute as a statement (no return expected)
+              const stmtFunc = new Function(trimmed);
+              stmtFunc();
+              // Restore console.log
+              console.log = originalLog;
+
+              if (capturedLogs.length > 0) {
+                capturedLogs.forEach(logLine => {
+                  appendConsoleLine(`↳ ${logLine}`, 'result');
+                });
+              } else {
+                // no output, but statement executed
+                appendConsoleLine(`✔ (statement executed)`, 'result');
+              }
+            } catch (stmtError) {
+              // restore console.log
+              console.log = originalLog;
+              // rethrow to be caught by outer catch
+              throw stmtError;
+            }
+          }
+        } catch (err) {
+          // Handle any error (syntax or runtime)
+          appendConsoleLine(`✖ ${err.message}`, 'error');
+        }
       }
 
-      h1 {
-        margin-top: 0;
-        font-size: clamp(2.5rem, 8vw, 4rem);
-        letter-spacing: -0.05em;
+      // run the bot with current input
+      function runBot() {
+        const code = codeInput.value;
+        if (!code.trim()) {
+          appendConsoleLine('// nothing to execute', 'comment');
+          return;
+        }
+
+        setLoading(true);
+
+        // simulate a small delay to mimic bot "thinking" (visual studio automation feel)
+        setTimeout(() => {
+          try {
+            executeOneLine(code);
+          } catch (e) {
+            appendConsoleLine(`✖ internal bot error: ${e.message}`, 'error');
+          } finally {
+            setLoading(false);
+          }
+        }, 180);
       }
 
-      p, li {
-        color: #46536b;
-        line-height: 1.7;
-      }
+      // event listeners
+      runBtn.addEventListener('click', runBot);
 
-      code {
-        padding: 0.15em 0.35em;
-        border-radius: 0.25em;
-        background: #f0f3f8;
-      }
+      // allow Enter key in the input field to trigger run
+      codeInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();  // prevent form submission / newline
+          runBot();
+        }
+      });
 
-      a {
-        color: #174ea6;
-      }
-    </style>
-  </head>
-  <body>
-    <main>
-      <p>A small local coding agent</p>
-      <h1>Coding Bot</h1>
-      <p>
-        Coding Bot helps with coding tasks in a Python project through an
-        OpenAI-compatible Chat Completions API.
-      </p>
-      <ul>
-        <li>Run coding tasks from the command line.</li>
-        <li>Use an optional local web interface.</li>
-        <li>Keep file access and allowed shell commands within your project root.</li>
-      </ul>
-      <p>
-        Requires Python 3.10+ and an API key in <code>OPENAI_API_KEY</code>.
-        The web interface binds to localhost; this Pages site is documentation
-        only and does not run the bot.
-      </p>
-      <p><a href="https://github.com/CELESTINO-UX/coding-bot">View the project on GitHub</a></p>
-    </main>
-  </body>
+      // focus input on load
+      codeInput.focus();
+
+      // select all on focus (like VS Code quick edit)
+      codeInput.addEventListener('focus', () => {
+        codeInput.select();
+      });
+
+      // some extra visual: prefill a couple of examples in console
+      // already added via HTML, but add a helpful comment
+      // Ensure the console doesn't overflow with placeholder clutter.
+      // Maybe add a final startup message.
+      appendConsoleLine('// bot loaded. write one line of code and press Run.', 'comment');
+    })();
+  </script>
+</body>
 </html>
